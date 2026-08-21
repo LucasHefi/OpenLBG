@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OpenLBG",
+  "version": "0.3.3",
+  "identifier": "app.openlbg.wallpapers",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "OpenLBG",
+        "width": 1320,
+        "height": 840,
+        "minWidth": 860,
+        "minHeight": 620,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "rpm", "appimage"],
+    "icon": ["icons/icon.png", "icons/icon.svg"],
+    "category": "Utility",
+    "shortDescription": "Živé tapety pro Linux"
+  }
+}

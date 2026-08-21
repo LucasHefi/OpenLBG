@@ -1,0 +1,7 @@
+{
+  "uuid": "openlbg-live@app.openlbg.wallpapers",
+  "name": "OpenLBG Live Wallpaper",
+  "description": "Renders OpenLBG particle wallpapers directly in the GNOME Shell background layer.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "version": 1
+}
