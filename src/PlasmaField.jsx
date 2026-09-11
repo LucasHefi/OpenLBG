@@ -26,6 +26,7 @@ const PLASMA_SHADER = `#version 300 es
   uniform float uStrikeTime;   // seconds since last click, large = none
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float hash1(float n) { return fract(sin(n) * 43758.5453); }
   float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
@@ -34,28 +35,53 @@ const PLASMA_SHADER = `#version 300 es
                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
   }
 
-  // distance to a jagged bolt path from anchor point toward target
-  float bolt(vec2 uv, vec2 anchor, vec2 target, float t, float seed, float jag) {
+  // jagged main channel from anchor toward target; two-octave wobble that
+  // re-rolls on discrete time slices so the shape never drifts smoothly
+  float channel(vec2 uv, vec2 anchor, vec2 target, float t, float seed, float jag) {
     vec2 dir = target - anchor;
-    // parametric distance from uv to the anchor->target line
     float len = max(length(dir), 0.0001);
     vec2 d = dir / len;
     vec2 rel = uv - anchor;
     float along = clamp(dot(rel, d), 0.0, len);
     vec2 foot = anchor + d * along;
-    // jaggedness grows along the bolt and flickers with time
     float progress = along / len;
-    float wobble = (noise(vec2(progress * 9.0 + seed * 31.0, t * 1.7 + seed)) - 0.5) * jag * len * 0.22 * progress;
+    float coarse = noise(vec2(progress * 8.0 + seed * 37.0, floor(t * 14.0) * 0.35 + seed)) - 0.5;
+    float fine = noise(vec2(progress * 26.0 + seed * 57.0, floor(t * 22.0) * 0.6 + seed * 2.0)) - 0.5;
+    float wobble = coarse + 0.45 * fine;
     float side = sign(dot(rel - d * along, vec2(-d.y, d.x)));
-    vec2 displaced = foot + vec2(-d.y, d.x) * wobble * side;
+    vec2 displaced = foot + vec2(-d.y, d.x) * wobble * jag * len * 0.22 * progress * side;
     float dist = length(uv - displaced);
-    // core + halo
-    float core = exp(-dist * dist * 2600.0) * 1.4;
-    float halo = exp(-dist * 210.0) * 0.32;
-    // shimmer: arcs flicker with pseudo-random life cycles
-    float life = 0.5 + 0.5 * sin(t * 2.3 + seed * 41.0);
-    life = pow(life, 5.0) * 1.3 + 0.12;
-    return (core + halo) * life * (1.0 - 0.35 * progress);
+    float core = exp(-dist * dist * 3400.0) * 1.5;
+    float glow = exp(-dist * 120.0) * 0.30;
+    return core + glow;
+  }
+
+  // discrete discharge life: flashes last ~120 ms with a random re-strike,
+  // most slots stay silent so arcs crack instead of pulsing smoothly
+  float life(float t, float seed) {
+    float rate = 2.5 + hash1(seed * 7.0) * 3.0;
+    float slot = floor(t * rate + seed);
+    float phase = fract(t * rate + seed);
+    float r = hash1(slot * 13.3 + seed);
+    float on = step(0.38, r);
+    float decay = exp(-phase * 15.0);
+    float restrike = exp(-abs(phase - (0.30 + r * 0.35)) * 26.0) * step(0.55, r);
+    return (decay + restrike) * on;
+  }
+
+  float bolt(vec2 uv, vec2 anchor, vec2 target, float t, float seed, float jag) {
+    float main = channel(uv, anchor, target, t, seed, jag);
+    // two branches splitting off the main channel at seeded points
+    float len = max(length(target - anchor), 0.0001);
+    vec2 dir = (target - anchor) / len;
+    vec2 p1 = anchor + dir * len * (0.22 + hash1(seed) * 0.2);
+    vec2 p2 = anchor + dir * len * (0.52 + hash1(seed * 3.0) * 0.22);
+    vec2 off = vec2(-dir.y, dir.x);
+    vec2 b1Target = p1 + off * (hash1(seed * 5.0) - 0.4) * len * 0.5 + vec2(0.0, 0.16);
+    vec2 b2Target = p2 - off * (hash1(seed * 9.0) - 0.35) * len * 0.55 + vec2(0.0, 0.04);
+    float b1 = channel(uv, p1, b1Target, t, seed + 11.0, jag * 1.45);
+    float b2 = channel(uv, p2, b2Target, t, seed + 29.0, jag * 1.5);
+    return (main + (b1 + b2) * 0.42) * life(t, seed) * (1.0 + 0.15 * hash1(seed * 17.0));
   }
 
   void main () {
@@ -79,28 +105,50 @@ const PLASMA_SHADER = `#version 300 es
 
     vec3 col = sky;
 
-    // cyan-white lightning between cells (+ to pointer)
+    // cyan-white lightning; each bolt has its own discharge life cycle,
+    // so arcs crackle independently instead of pulsing in sync
     vec3 boltCol = vec3(0.62, 0.82, 1.0);
     float b1 = bolt(uv, c1, c2, t, 3.7, 1.0);
     float b2 = bolt(uv, c2, c3, t, 8.2, 1.25);
     float b3 = bolt(uv, c3, c1, t, 14.5, 0.85);
-    float bp1 = bolt(uv, c1, cP, t, 21.0, 1.1) * uEnergy;
-    float bp2 = bolt(uv, c2, cP, t, 27.4, 1.2) * uEnergy;
-    float bTotal = b1 * 0.85 + b2 * 0.7 + b3 * 0.75 + bp1 * 1.2 + bp2 * 1.0;
+    // pointer arcs discharge only while the pointer charges the air,
+    // using slightly offset life so they never mirror the ambient ones
+    float bp1 = bolt(uv, c1, cP, t - 0.37, 21.0, 1.1) * uEnergy;
+    float bp2 = bolt(uv, c2, cP, t - 0.61, 27.4, 1.2) * uEnergy;
+    float bTotal = b1 * 0.9 + b2 * 0.75 + b3 * 0.8 + bp1 * 1.3 + bp2 * 1.1;
+
+    // extinguished channels keep a hot orange ribbon just after a discharge
+    float after1 = life(t - 0.9, 3.7) * 0.0 + pow(life(t, 3.7), 0.5) * 0.12;
+    float after2 = pow(life(t, 8.2), 0.5) * 0.10;
+    float afterP = pow(life(t - 0.37, 21.0), 0.5) * 0.16 * uEnergy;
+    vec3 hotCol = vec3(1.0, 0.62, 0.30);
     col += boltCol * bTotal;
+    col += hotCol * (after1 + after2 + afterP) * 0.55;
 
     // violet corona where bolt density is high
     col += vec3(0.36, 0.2, 0.75) * pow(min(bTotal, 1.4), 2.0) * 0.25;
 
-    // click strike: massive vertical discharge at the pointer, decaying
+    // incoming arcs lift the cloud base: light the top cloud layer per bolt
+    col += vec3(0.07, 0.08, 0.13) * clouds * clamp(b1 + b2 + b3, 0.0, 1.2);
+
+    // click strike: massive vertical discharge at the pointer, decaying;
+    // the main channel re-illuminates twice like a real multi-stroke flash
     if (uStrikeTime < 1.2) {
       float strikeAge = uStrikeTime;
       vec2 strikeTop = vec2(pointer.x, uAspect.y);
-      float strike = bolt(uv, strikeTop, pointer, t + strikeAge * 9.0, 55.0 + strikeAge * 40.0, 1.6);
-      float flash = exp(-strikeAge * 4.2);
+      float restrokes = 0.0;
+      for (int k = 0; k < 2; k++) {
+        float ka = float(k) * 0.16;
+        restrokes += max(0.0, exp(-abs(strikeAge - ka - 0.08) * 55.0));
+      }
+      float strike = bolt(uv, strikeTop, pointer, t + strikeAge * 9.0, 55.0 + strikeAge * 40.0, 1.6)
+        + channel(uv, strikeTop, pointer, t + strikeAge * 9.0, 71.0 + strikeAge * 60.0, 1.3) * 0.5;
+      float flash = exp(-strikeAge * 4.2) + restrokes * 0.45;
       col += vec3(0.85, 0.92, 1.0) * strike * flash * 2.4;
-      // whole-sky flash
-      col += vec3(0.28, 0.33, 0.45) * flash * 0.5;
+      // whole-sky flash, tighter attack, longer ambient tail
+      col += vec3(0.28, 0.33, 0.45) * (exp(-strikeAge * 7.0) + 0.22 * exp(-strikeAge * 1.8)) * 0.5;
+      // hot channel ribbon lingers after the strike
+      col += hotCol * exp(-strikeAge * 2.6) * 0.35 * clamp(strike, 0.0, 1.0);
     }
 
     // pointer glow: charged air ionization around the cursor
