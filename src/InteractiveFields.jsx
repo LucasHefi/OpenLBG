@@ -8,6 +8,7 @@ import GranularSignalField from './GranularSignalField';
 import CausticsField from './CausticsField';
 import AuroraField from './AuroraField';
 import NebulaField from './NebulaField';
+import MetalField from './MetalField';
 
 const TAU = Math.PI * 2;
 
@@ -462,5 +463,6 @@ export default function InteractiveField(props) {
   if (props.effect === 'caustics') return <CausticsField active={props.active} />;
   if (props.effect === 'aurora') return <AuroraField active={props.active} />;
   if (props.effect === 'nebula') return <NebulaField active={props.active} />;
+  if (props.effect === 'metal') return <MetalField active={props.active} />;
   return <CanvasInteractiveField {...props} />;
 }
