@@ -5,6 +5,7 @@ import DiamondGridField from './DiamondGridField';
 import RadialConstellationField from './RadialConstellationField';
 import OrganicVectorField from './OrganicVectorField';
 import GranularSignalField from './GranularSignalField';
+import CausticsField from './CausticsField';
 
 const TAU = Math.PI * 2;
 
@@ -456,5 +457,6 @@ export default function InteractiveField(props) {
   if (props.effect === 'constellation') return <RadialConstellationField active={props.active} />;
   if (props.effect === 'vector') return <OrganicVectorField active={props.active} />;
   if (props.effect === 'granular') return <GranularSignalField active={props.active} />;
+  if (props.effect === 'caustics') return <CausticsField active={props.active} />;
   return <CanvasInteractiveField {...props} />;
 }
