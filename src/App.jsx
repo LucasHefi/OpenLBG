@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import {
   Aperture, Boxes, Check, ChevronDown, CircleUserRound, Clock3, Compass, Download,
@@ -72,7 +72,7 @@ function TypeBadge({ type }) {
   return <span className={`type-badge ${type.toLowerCase()}`}><Icon size={12} fill={type === 'Video' ? 'currentColor' : 'none'} />{type}</span>;
 }
 
-function WallpaperCard({ item, favorite, installed, current, motionEnabled, onFavorite, onOpen }) {
+const WallpaperCard = memo(function WallpaperCard({ item, favorite, installed, current, motionEnabled, onFavorite, onOpen }) {
   const [previewing, setPreviewing] = useState(false);
   const openPreview = () => {
     setPreviewing(false);
@@ -86,7 +86,7 @@ function WallpaperCard({ item, favorite, installed, current, motionEnabled, onFa
       }
     }}>
       <div className="card-visual">
-        <img src={item.image} alt="" style={{ objectPosition: item.position || 'center' }} />
+        <img src={item.image} alt="" loading="lazy" decoding="async" style={{ objectPosition: item.position || 'center' }} />
         {item.type === 'Interaktivní' && motionEnabled && item.effect !== 'fluid' && <InteractiveField effect={item.effect} active={previewing} />}
         <div className="card-top"><TypeBadge type={item.type} /></div>
         {installed && <span className={current ? 'installed-badge current' : 'installed-badge'}><Check size={11} />{current ? 'Aktivní' : 'Nainstalováno'}</span>}
@@ -101,34 +101,124 @@ function WallpaperCard({ item, favorite, installed, current, motionEnabled, onFa
       </div>
     </article>
   );
+});
+
+function CatalogInsights({ items, activeFilter, onFilter }) {
+  const [metric, setMetric] = useState('count');
+  const stats = useMemo(() => {
+    const grouped = new Map([
+      ['Obrázek', { label: 'Obrázky', filter: 'Obrázky', count: 0, sizeMb: 0, color: '#d7ff63' }],
+      ['Video', { label: 'Video', filter: 'Video', count: 0, sizeMb: 0, color: '#67d7ff' }],
+      ['Interaktivní', { label: 'Interaktivní', filter: 'Interaktivní', count: 0, sizeMb: 0, color: '#cdb8ff' }],
+    ]);
+    items.forEach((item) => {
+      const entry = grouped.get(item.type);
+      if (entry) {
+        entry.count += 1;
+        entry.sizeMb += item.sizeMb;
+      }
+    });
+    return [...grouped.values()];
+  }, [items]);
+  const maxValue = Math.max(...stats.map((entry) => metric === 'count' ? entry.count : entry.sizeMb), 1);
+  const totalSize = items.reduce((sum, item) => sum + item.sizeMb, 0);
+  const interactiveCount = items.filter((item) => item.type === 'Interaktivní').length;
+  const featured = items.filter((item) => item.featured || item.type === 'Interaktivní').slice(0, 3);
+
+  return (
+    <section className="insights-panel" aria-labelledby="insights-title">
+      <div className="insights-copy">
+        <p className="section-kicker">RYCHLÝ PŘEHLED KATALOGU</p>
+        <h2 id="insights-title">Vyberte si podle atmosféry</h2>
+        <p>Porovnejte formáty na první pohled a otevřete si rovnou příslušnou část katalogu.</p>
+        <div className="insight-stats" aria-label="Souhrn katalogu">
+          <span><strong>{items.length}</strong> tapet</span>
+          <span><strong>{interactiveCount}</strong> interaktivních</span>
+          <span><strong>{totalSize.toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} MB</strong> celkem</span>
+        </div>
+      </div>
+      <div className="insights-chart">
+        <div className="insights-chart-head">
+          <span>Profil kolekce</span>
+          <div className="metric-switch" role="group" aria-label="Metrika grafu">
+            <button type="button" className={metric === 'count' ? 'active' : ''} onClick={() => setMetric('count')} aria-pressed={metric === 'count'}>Počet</button>
+            <button type="button" className={metric === 'size' ? 'active' : ''} onClick={() => setMetric('size')} aria-pressed={metric === 'size'}>Velikost</button>
+          </div>
+        </div>
+        <div className="insight-bars">
+          {stats.map((entry) => {
+            const value = metric === 'count' ? entry.count : entry.sizeMb;
+            const displayValue = metric === 'count'
+              ? `${entry.count} ${entry.count === 1 ? 'tapeta' : entry.count < 5 ? 'tapety' : 'tapet'}`
+              : `${entry.sizeMb.toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} MB`;
+            return (
+              <button
+                type="button"
+                key={entry.label}
+                className={activeFilter === entry.filter ? 'insight-bar selected' : 'insight-bar'}
+                style={{ '--bar-size': `${Math.max(8, (value / maxValue) * 100)}%`, '--bar-color': entry.color }}
+                onClick={() => onFilter(entry.filter)}
+                aria-pressed={activeFilter === entry.filter}
+              >
+                <span className="insight-bar-label"><span>{entry.label}</span><small>{displayValue}</small></span>
+                <span className="insight-bar-track"><span className="insight-bar-fill" /></span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="insight-thumbs" aria-label="Ukázky vizuálů">
+        {featured.map((item) => (
+          <button type="button" key={item.id} className="insight-thumb" onClick={() => onFilter(item.type === 'Obrázek' ? 'Obrázky' : item.type)} aria-label={`Zobrazit ${item.type.toLowerCase()}: ${item.title}`}>
+            <img src={item.image} alt="" loading="lazy" decoding="async" />
+            <span>{item.title}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function PreviewModal({ item, onClose, onInstall, onRemove, onFavorite, onLibrary, favorite, inLibrary, installed, current, applying, removing, applyError, autoplay, motionEnabled }) {
   const [playing, setPlaying] = useState(autoplay);
+  const [progress, setProgress] = useState(0);
   const closeRef = useRef(null);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     if (!item) return undefined;
     setPlaying(autoplay);
+    setProgress(0);
     closeRef.current?.focus();
     const closeOnEscape = (event) => event.key === 'Escape' && onClose();
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [autoplay, item, onClose]);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !item?.video) return undefined;
+    const syncProgress = () => setProgress(video.duration ? (video.currentTime / video.duration) * 100 : 0);
+    video.addEventListener('timeupdate', syncProgress);
+    if (playing) video.play().catch(() => setPlaying(false));
+    else video.pause();
+    return () => video.removeEventListener('timeupdate', syncProgress);
+  }, [item, playing]);
+
   if (!item) return null;
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <section className="preview-modal" onMouseDown={(event) => event.stopPropagation()} aria-modal="true" role="dialog" aria-labelledby="preview-title">
         <div className="preview-stage">
-          <img src={item.image} alt={`Náhled tapety ${item.title}`} />
+          {item.video ? <video ref={videoRef} src={item.video} poster={item.image} muted playsInline loop preload="metadata" autoPlay={playing} aria-label={`Video náhled tapety ${item.title}`} /> : <img src={item.image} alt={`Náhled tapety ${item.title}`} />}
           {item.type === 'Interaktivní' && motionEnabled && <InteractiveField effect={item.effect} active={playing} />}
           <div className="desktop-dots"><span /><span /><span /></div>
           <button type="button" ref={closeRef} className="modal-close" onClick={onClose} aria-label="Zavřít náhled"><X size={20} /></button>
           {item.type !== 'Obrázek' && (
             <div className="media-controls">
               <button type="button" onClick={() => setPlaying(!playing)} aria-label={playing ? 'Pozastavit náhled' : 'Spustit náhled'}>{playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}</button>
-              <div className="timeline" aria-hidden="true"><span className={playing ? 'playing' : ''} /></div><Volume2 size={16} />
+              {item.video ? <input className="timeline-range" type="range" min="0" max="100" step="0.1" value={progress} onChange={(event) => { const video = videoRef.current; if (video?.duration) video.currentTime = (Number(event.target.value) / 100) * video.duration; setProgress(Number(event.target.value)); }} aria-label="Pozice v náhledu" /> : <div className="timeline" aria-hidden="true"><span className={playing ? 'playing' : ''} /></div>}
+              <Volume2 size={16} aria-label="Náhled je bez zvuku" />
             </div>
           )}
         </div>
@@ -204,17 +294,18 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const searchRef = useRef(null);
   const toastTimer = useRef(null);
+  const deferredQuery = useDeferredValue(query);
 
   const favorites = useMemo(() => new Set(favoritesArray), [favoritesArray]);
   const library = useMemo(() => new Set(libraryArray), [libraryArray]);
   const viewDefinition = VIEW_DEFINITIONS[view] || VIEW_DEFINITIONS.discover;
   const motionEnabled = !settings.reduceMotion;
 
-  const showToast = (message) => {
+  const showToast = useCallback((message) => {
     window.clearTimeout(toastTimer.current);
     setToast(message);
     toastTimer.current = window.setTimeout(() => setToast(''), 3200);
-  };
+  }, []);
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
@@ -235,6 +326,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!selected) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [selected]);
+
+  useEffect(() => {
     if (!window.__TAURI_INTERNALS__) return;
     invoke('get_wallpaper_state')
       .then((state) => {
@@ -242,7 +340,7 @@ export default function App() {
         setCurrentWallpaperId(state.currentWallpaperId ?? null);
       })
       .catch(() => showToast('Stav instalací se nepodařilo načíst.'));
-  }, []);
+  }, [showToast]);
 
   const visibleItems = useMemo(() => {
     let scoped = WALLPAPERS;
@@ -251,11 +349,10 @@ export default function App() {
     if (view === 'favorites') scoped = WALLPAPERS.filter((item) => favorites.has(item.id));
     if (view === 'focus') scoped = WALLPAPERS.filter((item) => item.tags.includes('soustředění') || item.tags.includes('klid'));
 
-    const normalizedQuery = query.trim().toLocaleLowerCase('cs');
+    const normalizedQuery = deferredQuery.trim().toLocaleLowerCase('cs');
     const filtered = scoped.filter((item) => {
       const matchesFilter = filter === 'Vše' || item.type === filter || (filter === 'Obrázky' && item.type === 'Obrázek');
-      const haystack = `${item.title} ${item.author} ${item.type} ${item.tags.join(' ')}`.toLocaleLowerCase('cs');
-      return matchesFilter && (!normalizedQuery || haystack.includes(normalizedQuery));
+      return matchesFilter && (!normalizedQuery || item.searchText.includes(normalizedQuery));
     });
     return [...filtered].sort((a, b) => {
       if (sort === 'newest') return b.addedAt.localeCompare(a.addedAt);
@@ -263,27 +360,27 @@ export default function App() {
       if (sort === 'smallest') return a.sizeMb - b.sizeMb;
       return b.downloads - a.downloads;
     });
-  }, [favorites, filter, installed, library, query, sort, view]);
+  }, [favorites, filter, installed, library, deferredQuery, sort, view]);
 
-  const changeView = (nextView) => {
+  const changeView = useCallback((nextView) => {
     setView(nextView);
     setFilter('Vše');
     setQuery('');
     setProfileOpen(false);
     document.querySelector('.scroll-content')?.scrollTo({ top: 0, behavior: motionEnabled ? 'smooth' : 'auto' });
-  };
+  }, [motionEnabled]);
 
-  const toggleInArray = (setter, id) => setter((current) => current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]);
-  const toggleFavorite = (id) => {
+  const toggleInArray = useCallback((setter, id) => setter((current) => current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]), []);
+  const toggleFavorite = useCallback((id) => {
     const added = !favorites.has(id);
     toggleInArray(setFavoritesArray, id);
     showToast(added ? 'Přidáno do oblíbených' : 'Odebráno z oblíbených');
-  };
-  const toggleLibrary = (id) => {
+  }, [favorites, setFavoritesArray, showToast, toggleInArray]);
+  const toggleLibrary = useCallback((id) => {
     const added = !library.has(id);
     toggleInArray(setLibraryArray, id);
     showToast(added ? 'Přidáno do knihovny' : 'Odebráno z knihovny');
-  };
+  }, [library, setLibraryArray, showToast, toggleInArray]);
 
   const installItem = async (item) => {
     setApplyingId(item.id);
@@ -340,7 +437,7 @@ export default function App() {
             {view === 'settings' ? <SettingsView settings={settings} setSettings={setSettings} /> : <>
               {view === 'discover' && !query && filter === 'Vše' && (
                 <section className="hero" onClick={() => setSelected(WALLPAPERS[0])} tabIndex="0" onKeyDown={(event) => event.key === 'Enter' && setSelected(WALLPAPERS[0])}>
-                  <img src={WALLPAPERS[0].image} alt="Zasněžené hory s polární září a osvětlenou chatou" />
+                  <img src={WALLPAPERS[0].image} alt="Zasněžené hory s polární září a osvětlenou chatou" fetchPriority="high" decoding="async" />
                   <div className="hero-scrim" />
                   <div className="hero-content">
                     <span className="eyebrow"><Sparkles size={14} /> VÝBĚR REDAKCE</span>
@@ -351,6 +448,7 @@ export default function App() {
                   <div className="hero-meta"><span>4K</span><span>•</span><span>Statické pozadí</span><span>•</span><span>8,2 tis. stažení</span></div>
                 </section>
               )}
+              {view === 'discover' && !query && filter === 'Vše' && <CatalogInsights items={WALLPAPERS} activeFilter={filter} onFilter={setFilter} />}
 
               <section className={view === 'discover' && !query && filter === 'Vše' ? 'market-section' : 'market-section no-hero'}>
                 <div className="section-heading"><div><p>{view === 'discover' ? 'DOPORUČENO PRO VÁS' : viewDefinition.eyebrow}</p><h2>{view === 'discover' ? 'Najděte svou atmosféru' : viewDefinition.title}</h2></div><label className="sort-control"><ListFilter size={16} /><select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Řazení tapet">{SORT_OPTIONS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select><ChevronDown size={15} /></label></div>

@@ -1,20 +1,22 @@
-import arctic from './assets/arctic-retreat.png';
-import garden from './assets/bioluminescent-garden.png';
-import granularSignal from './assets/granular-signal.png';
-import chromaticFlow from './assets/chromatic-flow.png';
-import deepSea from './assets/deep-sea-pulse.png';
-import diamondIgnition from './assets/diamond-ignition.png';
-import digitalSand from './assets/digital-sand.png';
-import liquidChrome from './assets/liquid-chrome.png';
-import magneticGrid from './assets/magnetic-grid.png';
-import neonTides from './assets/neon-tides.png';
-import organicVectorField from './assets/organic-vector-field.png';
-import particles from './assets/particle-orbit.png';
-import rainGlass from './assets/rain-glass.png';
-import radialConstellation from './assets/radial-constellation.png';
-import starMap from './assets/star-map.png';
-import stillwaterDawn from './assets/stillwater-dawn.png';
-import transit from './assets/night-transit.png';
+import arctic from './assets/arctic-retreat.webp';
+import arcticAuroraPreview from './assets/arctic-aurora-preview.mp4';
+import garden from './assets/bioluminescent-garden.webp';
+import granularSignal from './assets/granular-signal.webp';
+import chromaticFlow from './assets/chromatic-flow.webp';
+import deepSea from './assets/deep-sea-pulse.webp';
+import diamondIgnition from './assets/diamond-ignition.webp';
+import digitalSand from './assets/digital-sand.webp';
+import liquidChrome from './assets/liquid-chrome.webp';
+import magneticGrid from './assets/magnetic-grid.webp';
+import neonTides from './assets/neon-tides.webp';
+import organicVectorField from './assets/organic-vector-field.webp';
+import particles from './assets/particle-orbit.webp';
+import rainGlass from './assets/rain-glass.webp';
+import radialConstellation from './assets/radial-constellation.webp';
+import starMap from './assets/star-map.webp';
+import stillwaterDawn from './assets/stillwater-dawn.webp';
+import transit from './assets/night-transit.webp';
+import nightTransitPreview from './assets/night-transit-preview.mp4';
 
 export const WALLPAPERS = [
   {
@@ -52,6 +54,7 @@ export const WALLPAPERS = [
     author: 'framefield',
     type: 'Video',
     image: transit,
+    video: nightTransitPreview,
     size: '86,4 MB',
     sizeMb: 86.4,
     accent: '#76d5dd',
@@ -66,6 +69,7 @@ export const WALLPAPERS = [
     author: 'northbound',
     type: 'Video',
     image: arctic,
+    video: arcticAuroraPreview,
     size: '48,1 MB',
     sizeMb: 48.1,
     accent: '#71dbe8',
@@ -314,7 +318,10 @@ export const WALLPAPERS = [
     tags: ['částice', 'síť', 'minimalistické', 'klid', 'soustředění'],
     description: 'Tiché granularní pole kolem kurzoru rozsvítí drobné částice a odhalí krátká spojení mezi blízkými body.',
   },
-];
+].map((item) => ({
+  ...item,
+  searchText: `${item.title} ${item.author} ${item.type} ${item.tags.join(' ')}`.toLocaleLowerCase('cs'),
+}));
 
 export const TYPE_FILTERS = ['Vše', 'Obrázky', 'Video', 'Interaktivní'];
 

@@ -13,10 +13,16 @@ Marketplace s obrázkovými, video a interaktivními tapetami pro Linux. Uživat
 - filtrování na obrázky, video a interaktivní tapety;
 - řazení podle oblíbenosti, data, názvu nebo velikosti souboru;
 - detailní náhled s metadaty, oblíbenými položkami a knihovnou;
+- rychlý interaktivní přehled katalogu s přepínáním počtu a velikosti assetů;
+- skutečné lokální MP4 náhledy pro video tapety s ovládáním přehrávání a pozice;
 - kolekce **Moje oblíbené** a **Klid a soustředění**;
 - lokální persistence oblíbených, knihovny, řazení a nastavení;
 - ambientní částice, interaktivní canvas/WebGL efekty a volbu omezení pohybu;
 - Tauri příkazy pro zjištění instalací, nastavení a odinstalaci tapety.
+
+### Výkon assetů
+
+Obrazové assety webové vrstvy i desktopového katalogu používají WebP. Původních 17 PNG posterů zabíralo přibližně 30 MB; optimalizované WebP varianty mají dohromady přibližně 1,8 MB. Video náhledy jsou krátké, muted MP4 smyčky a načítají se až v detailu tapety.
 
 ### Desktopová integrace
 

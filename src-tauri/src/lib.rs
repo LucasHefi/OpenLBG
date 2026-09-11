@@ -31,84 +31,84 @@ struct WallpaperAsset {
 fn wallpaper_asset(id: u32) -> Option<WallpaperAsset> {
     match id {
         1 => Some(WallpaperAsset {
-            filename: "arctic-solitude.png",
-            bytes: include_bytes!("../../src/assets/arctic-retreat.png"),
+            filename: "arctic-solitude.webp",
+            bytes: include_bytes!("../../src/assets/arctic-retreat.webp"),
         }),
         2 => Some(WallpaperAsset {
-            filename: "particle-current.png",
-            bytes: include_bytes!("../../src/assets/particle-orbit.png"),
+            filename: "particle-current.webp",
+            bytes: include_bytes!("../../src/assets/particle-orbit.webp"),
         }),
         3 => Some(WallpaperAsset {
-            filename: "midnight-transit.png",
-            bytes: include_bytes!("../../src/assets/night-transit.png"),
+            filename: "midnight-transit.webp",
+            bytes: include_bytes!("../../src/assets/night-transit.webp"),
         }),
         4 => Some(WallpaperAsset {
-            filename: "silent-aurora.png",
-            bytes: include_bytes!("../../src/assets/arctic-retreat.png"),
+            filename: "silent-aurora.webp",
+            bytes: include_bytes!("../../src/assets/arctic-retreat.webp"),
         }),
         5 => Some(WallpaperAsset {
-            filename: "violet-gravity.png",
-            bytes: include_bytes!("../../src/assets/particle-orbit.png"),
+            filename: "violet-gravity.webp",
+            bytes: include_bytes!("../../src/assets/particle-orbit.webp"),
         }),
         6 => Some(WallpaperAsset {
-            filename: "after-the-rain.png",
-            bytes: include_bytes!("../../src/assets/night-transit.png"),
+            filename: "after-the-rain.webp",
+            bytes: include_bytes!("../../src/assets/night-transit.webp"),
         }),
         7 => Some(WallpaperAsset {
-            filename: "neon-tides.png",
-            bytes: include_bytes!("../../src/assets/neon-tides.png"),
+            filename: "neon-tides.webp",
+            bytes: include_bytes!("../../src/assets/neon-tides.webp"),
         }),
         8 => Some(WallpaperAsset {
-            filename: "rain-glass.png",
-            bytes: include_bytes!("../../src/assets/rain-glass.png"),
+            filename: "rain-glass.webp",
+            bytes: include_bytes!("../../src/assets/rain-glass.webp"),
         }),
         9 => Some(WallpaperAsset {
-            filename: "bioluminescent-garden.png",
-            bytes: include_bytes!("../../src/assets/bioluminescent-garden.png"),
+            filename: "bioluminescent-garden.webp",
+            bytes: include_bytes!("../../src/assets/bioluminescent-garden.webp"),
         }),
         10 => Some(WallpaperAsset {
-            filename: "star-map.png",
-            bytes: include_bytes!("../../src/assets/star-map.png"),
+            filename: "star-map.webp",
+            bytes: include_bytes!("../../src/assets/star-map.webp"),
         }),
         11 => Some(WallpaperAsset {
-            filename: "liquid-chrome.png",
-            bytes: include_bytes!("../../src/assets/liquid-chrome.png"),
+            filename: "liquid-chrome.webp",
+            bytes: include_bytes!("../../src/assets/liquid-chrome.webp"),
         }),
         12 => Some(WallpaperAsset {
-            filename: "digital-sand.png",
-            bytes: include_bytes!("../../src/assets/digital-sand.png"),
+            filename: "digital-sand.webp",
+            bytes: include_bytes!("../../src/assets/digital-sand.webp"),
         }),
         13 => Some(WallpaperAsset {
-            filename: "deep-sea-pulse.png",
-            bytes: include_bytes!("../../src/assets/deep-sea-pulse.png"),
+            filename: "deep-sea-pulse.webp",
+            bytes: include_bytes!("../../src/assets/deep-sea-pulse.webp"),
         }),
         14 => Some(WallpaperAsset {
-            filename: "stillwater-dawn.png",
-            bytes: include_bytes!("../../src/assets/stillwater-dawn.png"),
+            filename: "stillwater-dawn.webp",
+            bytes: include_bytes!("../../src/assets/stillwater-dawn.webp"),
         }),
         15 => Some(WallpaperAsset {
-            filename: "chromatic-flow.png",
-            bytes: include_bytes!("../../src/assets/chromatic-flow.png"),
+            filename: "chromatic-flow.webp",
+            bytes: include_bytes!("../../src/assets/chromatic-flow.webp"),
         }),
         16 => Some(WallpaperAsset {
-            filename: "magnetic-grid.png",
-            bytes: include_bytes!("../../src/assets/magnetic-grid.png"),
+            filename: "magnetic-grid.webp",
+            bytes: include_bytes!("../../src/assets/magnetic-grid.webp"),
         }),
         17 => Some(WallpaperAsset {
-            filename: "diamond-ignition.png",
-            bytes: include_bytes!("../../src/assets/diamond-ignition.png"),
+            filename: "diamond-ignition.webp",
+            bytes: include_bytes!("../../src/assets/diamond-ignition.webp"),
         }),
         18 => Some(WallpaperAsset {
-            filename: "radial-constellation.png",
-            bytes: include_bytes!("../../src/assets/radial-constellation.png"),
+            filename: "radial-constellation.webp",
+            bytes: include_bytes!("../../src/assets/radial-constellation.webp"),
         }),
         19 => Some(WallpaperAsset {
-            filename: "organic-vector-field.png",
-            bytes: include_bytes!("../../src/assets/organic-vector-field.png"),
+            filename: "organic-vector-field.webp",
+            bytes: include_bytes!("../../src/assets/organic-vector-field.webp"),
         }),
         20 => Some(WallpaperAsset {
-            filename: "granular-signal.png",
-            bytes: include_bytes!("../../src/assets/granular-signal.png"),
+            filename: "granular-signal.webp",
+            bytes: include_bytes!("../../src/assets/granular-signal.webp"),
         }),
         _ => None,
     }
@@ -511,26 +511,26 @@ mod tests {
 
     #[test]
     fn catalog_ids_are_allowlisted() {
-        assert_eq!(wallpaper_asset(1).unwrap().filename, "arctic-solitude.png");
-        assert_eq!(wallpaper_asset(5).unwrap().filename, "violet-gravity.png");
-        assert_eq!(wallpaper_asset(7).unwrap().filename, "neon-tides.png");
-        assert_eq!(wallpaper_asset(13).unwrap().filename, "deep-sea-pulse.png");
-        assert_eq!(wallpaper_asset(14).unwrap().filename, "stillwater-dawn.png");
-        assert_eq!(wallpaper_asset(15).unwrap().filename, "chromatic-flow.png");
-        assert_eq!(wallpaper_asset(16).unwrap().filename, "magnetic-grid.png");
+        assert_eq!(wallpaper_asset(1).unwrap().filename, "arctic-solitude.webp");
+        assert_eq!(wallpaper_asset(5).unwrap().filename, "violet-gravity.webp");
+        assert_eq!(wallpaper_asset(7).unwrap().filename, "neon-tides.webp");
+        assert_eq!(wallpaper_asset(13).unwrap().filename, "deep-sea-pulse.webp");
+        assert_eq!(wallpaper_asset(14).unwrap().filename, "stillwater-dawn.webp");
+        assert_eq!(wallpaper_asset(15).unwrap().filename, "chromatic-flow.webp");
+        assert_eq!(wallpaper_asset(16).unwrap().filename, "magnetic-grid.webp");
         assert_eq!(
             wallpaper_asset(17).unwrap().filename,
-            "diamond-ignition.png"
+            "diamond-ignition.webp"
         );
         assert_eq!(
             wallpaper_asset(18).unwrap().filename,
-            "radial-constellation.png"
+            "radial-constellation.webp"
         );
         assert_eq!(
             wallpaper_asset(19).unwrap().filename,
-            "organic-vector-field.png"
+            "organic-vector-field.webp"
         );
-        assert_eq!(wallpaper_asset(20).unwrap().filename, "granular-signal.png");
+        assert_eq!(wallpaper_asset(20).unwrap().filename, "granular-signal.webp");
         assert!(wallpaper_asset(99).is_none());
     }
 
