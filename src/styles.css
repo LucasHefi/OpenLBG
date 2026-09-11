@@ -150,6 +150,10 @@ button:focus-visible, article:focus-visible, input:focus-visible { outline: 2px 
 .interactive-field-granular { opacity: .98; mix-blend-mode: normal; }
 .interactive-field-caustics { opacity: 1; mix-blend-mode: normal; }
 .interactive-field-caustics[data-webgl-fallback="poster"] { display: none; }
+.interactive-field-aurora { opacity: 1; mix-blend-mode: normal; }
+.interactive-field-aurora[data-webgl-fallback="poster"] { display: none; }
+.interactive-field-nebula { opacity: 1; mix-blend-mode: normal; }
+.interactive-field-nebula[data-webgl-fallback="poster"] { display: none; }
 .empty { min-height: 260px; display: grid; place-items: center; align-content: center; gap: 8px; color: #5d6570; }
 .empty h3, .empty p { margin: 0; }
 .empty h3 { color: #adb3bc; font-size: 15px; }
