@@ -35,26 +35,31 @@ const PLASMA_SHADER = `#version 300 es
                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
   }
 
-  // jagged main channel; wobble re-rolls on discrete time slices so the
-  // shape stays fixed per flash instead of sliding smoothly
+  // stepped-leader channel: a polyline through per-segment way-points with
+  // sharp kinks between straight runs - the signature look of real lightning.
+  float wp(float seed, float seg) { return (hash1(seed + seg * 17.0) - 0.5) * 2.2; }
+
   float channel(vec2 uv, vec2 anchor, vec2 target, float t, float seed, float jag) {
     vec2 dir = target - anchor;
     float len = max(length(dir), 0.0001);
     vec2 d = dir / len;
+    vec2 perp = vec2(-d.y, d.x);
     vec2 rel = uv - anchor;
     float along = clamp(dot(rel, d), 0.0, len);
-    vec2 foot = anchor + d * along;
     float progress = along / len;
-    // jitter clock advances only via the slot of the owning bolt is done in
-    // bolt(); here t is already quantized, so a channel freezes between hits
-    float coarse = noise(vec2(progress * 8.0 + seed * 37.0, t * 0.35 + seed)) - 0.5;
-    float fine = noise(vec2(progress * 26.0 + seed * 57.0, t * 0.6 + seed * 2.0)) - 0.5;
-    float wobble = coarse + 0.45 * fine;
-    float side = sign(dot(rel - d * along, vec2(-d.y, d.x)));
-    vec2 displaced = foot + vec2(-d.y, d.x) * wobble * jag * len * 0.22 * progress * side;
-    float dist = length(uv - displaced);
-    float core = exp(-dist * dist * 2600.0) * 1.35;
-    float glow = exp(-dist * 150.0) * 0.26;
+    // 7 segments; way-points are straight-line interpolated so kinks land
+    // at segment boundaries, lateral scale tapers near the anchor
+    float seg = progress * 7.0;
+    float segIndex = floor(seg);
+    float segPhase = fract(seg);
+    float lat0 = wp(seed, segIndex);
+    float lat1 = wp(seed, segIndex + 1.0);
+    float lateral = mix(lat0, lat1, segPhase);
+    vec2 center = anchor + d * along + perp * lateral * jag * len * 0.11 * (0.15 + progress);
+    float dist = length(dot(uv - center, perp));
+    // sharper core, softer sheet glow
+    float core = exp(-dist * dist * 3000.0) * 1.3;
+    float glow = exp(-dist * 110.0) * 0.24;
     return core + glow;
   }
 
