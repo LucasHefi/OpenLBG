@@ -162,6 +162,8 @@ button:focus-visible, article:focus-visible, input:focus-visible { outline: 2px 
 .interactive-field-blackhole[data-webgl-fallback="poster"] { display: none; }
 .interactive-field-circuit { opacity: 1; mix-blend-mode: normal; }
 .interactive-field-circuit[data-webgl-fallback="poster"] { display: none; }
+.interactive-field-solar { opacity: 1; mix-blend-mode: normal; }
+.interactive-field-solar[data-webgl-fallback="poster"] { display: none; }
 .empty { min-height: 260px; display: grid; place-items: center; align-content: center; gap: 8px; color: #5d6570; }
 .empty h3, .empty p { margin: 0; }
 .empty h3 { color: #adb3bc; font-size: 15px; }

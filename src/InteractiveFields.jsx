@@ -12,6 +12,7 @@ import MetalField from './MetalField';
 import PlasmaField from './PlasmaField';
 import BlackHoleField from './BlackHoleField';
 import CircuitField from './CircuitField';
+import SolarField from './SolarField';
 
 const TAU = Math.PI * 2;
 
@@ -470,5 +471,6 @@ export default function InteractiveField(props) {
   if (props.effect === 'plasma') return <PlasmaField active={props.active} />;
   if (props.effect === 'blackhole') return <BlackHoleField active={props.active} />;
   if (props.effect === 'circuit') return <CircuitField active={props.active} />;
+  if (props.effect === 'solar') return <SolarField active={props.active} />;
   return <CanvasInteractiveField {...props} />;
 }
