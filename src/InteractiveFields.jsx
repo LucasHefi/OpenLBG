@@ -10,6 +10,7 @@ import AuroraField from './AuroraField';
 import NebulaField from './NebulaField';
 import MetalField from './MetalField';
 import PlasmaField from './PlasmaField';
+import BlackHoleField from './BlackHoleField';
 
 const TAU = Math.PI * 2;
 
@@ -466,5 +467,6 @@ export default function InteractiveField(props) {
   if (props.effect === 'nebula') return <NebulaField active={props.active} />;
   if (props.effect === 'metal') return <MetalField active={props.active} />;
   if (props.effect === 'plasma') return <PlasmaField active={props.active} />;
+  if (props.effect === 'blackhole') return <BlackHoleField active={props.active} />;
   return <CanvasInteractiveField {...props} />;
 }
